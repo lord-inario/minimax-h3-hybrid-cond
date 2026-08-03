@@ -76,42 +76,62 @@ only the requested motion.
 
 This uses `minimax_keyframes` for `fl2va`. The first frame is a keyframe, not `<Picture 1>`.
 
-## 3. Hybrid R2V + fl2va example
+## Hybrid: first frame + reference image with either H3 model
 
-Use this when a woman image must control the opening/style and a separate cat image must control the cat identity.
+The same Hybrid node combines both inputs in one conditioning payload:
 
 ```text
-first_frame: woman image
+first_frame  → woman image / opening keyframe
+ref_image_1  → cat image / identity reference
+```
+
+Use the workflow with either H3 diffusion checkpoint.
+
+### Variant A: fl2va model
+
+```text
+Load Diffusion Model: minimax_h3_fl2va_bf16.safetensors
+first_frame: connected
+ref_image_1: connected
 last_frame: optional
-ref_image_1: cat image
 also_ref_first_frame: false
 ```
 
-Prompt:
+This is preferred when locking the first frame is the main priority. The first frame becomes the opening keyframe and the cat becomes `<Picture 1>`.
+
+### Variant B: ref2va model
 
 ```text
-The first frame is the authoritative source for the woman's identity, camera,
-white background, lighting, rendering, and overall visual style. <Picture 1>
-is the authoritative reference for the cat's identity, face, colors, clothing,
-proportions, and silhouette. The cat suddenly jumps forward and clings to the
-woman's face in a cute, harmless, exaggerated cartoon action. Preserve both
-characters and keep the motion readable.
+Load Diffusion Model: minimax_h3_ref2va_bf16.safetensors
+first_frame: connected
+ref_image_1: connected
+last_frame: optional
+also_ref_first_frame: false
 ```
 
-This uses both payload sections in one node:
+This is preferred when the cat identity/reference is the main priority. The same first-frame keyframe and `<Picture 1>` reference are supplied together.
+
+### Shared prompt
 
 ```text
+The first frame is the authoritative source for the woman's identity,
+opening composition, camera, white background, lighting, rendering, and style.
+<Picture 1> is the authoritative source for the cat's identity, face, colors,
+clothing, proportions, and silhouette. The cat suddenly jumps forward and
+clings to the woman's face in a cute, harmless, exaggerated cartoon action.
+Preserve both characters and keep the motion readable.
+```
+
+Both variants use:
+
+```text
+first_frame → keyframe at frame 0
+ref_image_1 → <Picture 1>
 minimax_keyframes = [first_frame, optional last_frame]
 minimax_refs      = [ref_image_1, optional other references]
 ```
 
-The custom runtime patch keeps the latent order aligned with the H3 packed layout:
-
-```text
-[keyframe latents] + [reference latents]
-```
-
-This avoids the `shape mismatch` that occurs when keyframe latents are overwritten by reference latents.
+Select either the `fl2va` checkpoint or the `ref2va` checkpoint for each generation. Do not connect the same conditioning to two diffusion models at the same time. The Hybrid node supports both model variants without changing the reference mapping.
 
 ## Native audio
 
