@@ -122,17 +122,7 @@ clings to the woman's face in a cute, harmless, exaggerated cartoon action.
 Preserve both characters and keep the motion readable.
 ```
 
-Both variants use:
-
-```text
-first_frame → keyframe at frame 0
-ref_image_1 → <Picture 1>
-minimax_keyframes = [first_frame, optional last_frame]
-minimax_refs      = [ref_image_1, optional other references]
-```
-
-Select either the `fl2va` checkpoint or the `ref2va` checkpoint for each generation. Do not connect the same conditioning to two diffusion models at the same time. The Hybrid node supports both model variants without changing the reference mapping.
-
+The node combines both payload sections internally:
 ## Native audio
 
 Connect `ref_audio_1` for an audio reference, or use the H3 audio VAE output for generated native audio. Keep dialogue, sound effects, and timing instructions in the prompt. The node always creates the H3 audio/video latent pair.
@@ -143,4 +133,3 @@ Connect `ref_audio_1` for an audio reference, or use the H3 audio VAE output for
 - `width` and `height` should be multiples of 32.
 - `ref_image_size=match` preserves the relative reference image size; `max` limits the reference short edge.
 - Do not combine separate H3 I2V and R2V conditioning nodes for the same sample. Use this Hybrid node so the packed layout and latent order remain consistent.
-- `negative_constraints` is not required by this node and should only be added to the prompt when explicitly desired.
